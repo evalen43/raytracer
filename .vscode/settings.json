@@ -1,0 +1,9 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "*.f90": "fortran-modern",
+        "*.f": "fortran-fixed",
+        "*.f95": "fortran-95",
+        "utility": "cpp"
+    }
+}

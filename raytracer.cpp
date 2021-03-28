@@ -6,24 +6,16 @@
 #include <iostream>
 #include <cassert>
 #include "sphere.h"
+#include <memory>
 
 #if defined __linux__ || defined __APPLE__
 // "Compiled for Linux
 #else
 // Windows doesn't define these values by default, Linux does
 
-
 //#define M_PI 3.141592653589793
 //#define INFINITY 1e8
 #endif
-
-// //This variable controls the maximum recursion depth
-// #define MAX_RAY_DEPTH 5
-
-// float mix(const float &a, const float &b, const float &mix)
-// {
-//     return b * mix + a * (1 - mix);
-// }
 
 /*This is the main trace function. It takes a ray as argument (defined by its origin and direction).
 We test if this ray intersects any of the geometry in the scene. If the ray intersects an object, we compute the
@@ -46,11 +38,14 @@ background color.*/
 void render(const std::vector<Sphere> &spheres)
 {
     unsigned width = 640, height = 480;
+    //std::shared_ptr<Vec3f[]> image(new Vec3f(width*height));
+    //Vec3f *pixel=image;
     Vec3f *image = new Vec3f[width * height], *pixel = image;
     float invWidth = 1 / float(width), invHeight = 1 / float(height);
     float fov = 30, aspectratio = width / float(height);
     float angle = tan(M_PI * 0.5 * fov / 180.);
     // Trace rays
+    int npix=0;
     for (unsigned y = 0; y < height; ++y) {
         for (unsigned x = 0; x < width; ++x, ++pixel) {
             float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio;
@@ -58,6 +53,8 @@ void render(const std::vector<Sphere> &spheres)
             Vec3f raydir(xx, yy, -1);
             raydir.normalize();
             *pixel = trace(Vec3f(0), raydir, spheres, 0);
+            //image[npix] = trace(Vec3f(0), raydir, spheres, 0);
+            npix++;
         }
     }
     // Save result to a PPM image (keep these flags if you compile under Windows)
