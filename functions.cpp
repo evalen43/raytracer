@@ -1,5 +1,7 @@
 #include "sphere.h"
 #include <vector>
+#include <iostream>
+#include <FreeImage.h>
 //This variable controls the maximum recursion depth
 #define MAX_RAY_DEPTH 5
 
@@ -8,12 +10,15 @@ float mix(const float &a, const float &b, const float &mix)
     return b * mix + a * (1 - mix);
 }
 
-/*This is the main trace function. It takes a ray as argument (defined by its origin and direction).
-We test if this ray intersects any of the geometry in the scene. If the ray intersects an object, we compute the
-intersection point, the normal at the intersection point, and shade this point using this information.
-Shading depends on the surface property (is it transparent, reflective, diffuse). The function returns a color for
+/*-----------------------------------------------------------------------------------------------------------------
+Main trace function. 
+It takes a ray as argument (defined by its origin and direction), and then tests if this ray intersects any of the 
+geometry in the scene. If it does, then computes the intersection point, the normal at the intersection point, and 
+shade this point using this information.
+Shading depends on the surface property (transparent, reflective, diffuse). The function returns a color for
 the ray. If the ray intersects an object that is the color of the object at the intersection point, otherwise it
-returns the background color.*/
+returns the background color.
+------------------------------------------------------------------------------------------------------------------*/
 
 Vec3f trace(
     const Vec3f &rayorig,
@@ -25,11 +30,14 @@ Vec3f trace(
     float tnear = INFINITY;
     const Sphere* sphere = NULL;
     // find intersection of this ray with the sphere in the scene
-    for (unsigned i = 0; i < spheres.size(); ++i) {
+    for (unsigned i = 0; i < spheres.size(); ++i) 
+    {
         float t0 = INFINITY, t1 = INFINITY;
-        if (spheres[i].intersect(rayorig, raydir, t0, t1)) {
+        if (spheres[i].intersect(rayorig, raydir, t0, t1)) 
+        {
             if (t0 < 0) t0 = t1;
-            if (t0 < tnear) {
+            if (t0 < tnear) 
+            {
                 tnear = t0;
                 sphere = &spheres[i];
             }
@@ -58,16 +66,18 @@ Vec3f trace(
 
         Vec3f refldir = raydir - nhit * 2 * raydir.dot(nhit);
         refldir.normalize();
-        Vec3f reflection = trace(phit + nhit * bias, refldir, spheres, depth + 1);
+        Vec3f reflection = trace(phit + nhit * bias, refldir, spheres, depth + 1);//--------------------------Recursive
         Vec3f refraction = 0;
         // if the sphere is also transparent compute refraction ray (transmission)
-        if (sphere->transparency) {
+        if (sphere->transparency) 
+        {
             float ior = 1.1, eta = (inside) ? ior : 1 / ior; // are we inside or outside the surface?
             float cosi = -nhit.dot(raydir);
             float k = 1 - eta * eta * (1 - cosi * cosi);
             Vec3f refrdir = raydir * eta + nhit * (eta *  cosi - sqrt(k));
             refrdir.normalize();
-            refraction = trace(phit - nhit * bias, refrdir, spheres, depth + 1);
+            refraction = trace(phit - nhit * bias, refrdir, spheres, depth + 1);//----------------------------Recursive
+            std::cout<<refraction<<std::endl;
         }
         // the result is a mix of reflection and refraction (if the sphere is transparent)
         surfaceColor = (
@@ -102,9 +112,12 @@ Vec3f trace(
 }
 
 
-/*Main rendering function. We compute a camera ray for each pixel of the image trace it and return a color.
-If the ray hits a sphere, we return the color of the sphere at the intersection point, else we return the
-background color.*/
+/*--------------------------------------------------------------------------------------------------------
+render: Main rendering function. 
+Computes a camera ray for each pixel of the image, trace it, and return a color.
+Ray hits a sphere: Returns the color of the sphere at the intersection point, else returns the background color.
+Parameter(s): vector with list of objects (spheres)
+---------------------------------------------------------------------------------------------------------*/
 
 void render(const std::vector<Sphere> &spheres)
 {
@@ -138,4 +151,51 @@ void render(const std::vector<Sphere> &spheres)
     }
     ofs.close();
     delete [] image;
+}
+
+/*-------------------------------------------------------------------------------------------------
+Generating jpg file using FreeImage
+parameters: framebuffer, width, height, samples per pixel
+--------------------------------------------------------------------------------------------------*/
+
+void save_image(std::shared_ptr<vec3[]> framebuffer, int width, int height, int samples_per_pixel) 
+{
+	std::vector<unsigned char> pixels;
+	std::ofstream ofs;
+	ofs.open("out.ppm");
+	ofs << "P6\n" << width << " " << height << "\n255\n";
+	int currentpix = 0;
+	for (int j = 0; j < height; ++j) {
+		for (int i = 0; i < width; i++)
+		{
+			// write_color(ofs, framebuffer[currentpix]);
+			int b = (static_cast<int>(255.99 * clamp(0, 1, framebuffer[currentpix].x)));
+			int g = (static_cast<int>(255.99 * clamp(0, 1, framebuffer[currentpix].y)));
+			int r = (static_cast<int>(255.99 * clamp(0, 1, framebuffer[currentpix].z)));
+			if (samples_per_pixel > 1) {
+				auto scale = 1.0 / samples_per_pixel;
+				b *= scale; g *= scale; r *= scale;
+			}
+			ofs << r << g << b;
+			pixels.push_back(r);
+			pixels.push_back(g);
+			pixels.push_back(b);
+
+			currentpix++;
+		}
+	}
+	ofs.close();
+	//writeImage(width, height, pixels);
+	FreeImage_Initialise();
+	FIBITMAP* img = FreeImage_ConvertFromRawBits(pixels.data(), width, height, width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
+	FreeImage_FlipVertical(img);
+	char fname[] = "output.png";
+	FreeImage_Save(FIF_PNG, img, fname, 0);
+
+	FreeImage_DeInitialise();
+	printf("outputting image...\n");
+	std::cout << fname << std::endl;
+	std::cout << "Press any key to exit" << std::endl;
+	std::cin.get();
+	std::cerr << "\nDone.\n";
 }
