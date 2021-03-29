@@ -24,7 +24,7 @@ Vec3f trace(
     const int &depth);
 void render(const std::vector<Sphere> &spheres);
 
-void save_image(std::shared_ptr<Vec3f[]> framebuffer, int width, int height, int samples_per_pixel); 
+//void save_image(std::shared_ptr<Vec3f[]> framebuffer, int width, int height, int samples_per_pixel); 
 
 
 /*In the main function, we will create the scene which is composed of 5 spheres and 1 light (which is also a sphere).
