@@ -122,9 +122,9 @@ Parameter(s): vector with list of objects (spheres)
 void render(const std::vector<Sphere> &spheres)
 {
     unsigned width = 640, height = 480;
-    //std::shared_ptr<Vec3f[]> image(new Vec3f(width*height));
+    std::shared_ptr<Vec3f[]> image(new Vec3f(width*height));
     //Vec3f *pixel=image;
-    Vec3f *image = new Vec3f[width * height], *pixel = image;
+    //Vec3f *image = new Vec3f[width * height], *pixel = image;
     float invWidth = 1 / float(width), invHeight = 1 / float(height);
     float fov = 30, aspectratio = width / float(height);
     float angle = tan(M_PI * 0.5 * fov / 180.);
@@ -136,34 +136,39 @@ void render(const std::vector<Sphere> &spheres)
             float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle;
             Vec3f raydir(xx, yy, -1);
             raydir.normalize();
-            *pixel = trace(Vec3f(0), raydir, spheres, 0);
-            //image[npix] = trace(Vec3f(0), raydir, spheres, 0);
+            //*pixel = trace(Vec3f(0), raydir, spheres, 0);
+            image[npix] = trace(Vec3f(0), raydir, spheres, 0);
             npix++;
         }
     }
     // Save result to a PPM image (keep these flags if you compile under Windows)
-    std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
-    ofs << "P6\n" << width << " " << height << "\n255\n";
-    for (unsigned i = 0; i < width * height; ++i) {
-        ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
-               (unsigned char)(std::min(float(1), image[i].y) * 255) <<
-               (unsigned char)(std::min(float(1), image[i].z) * 255);
-    }
-    ofs.close();
+    save_image(image, width, height, 1)    
+    // std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
+    // ofs << "P6\n" << width << " " << height << "\n255\n";
+    // for (unsigned i = 0; i < width * height; ++i) {
+    //     ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
+    //            (unsigned char)(std::min(float(1), image[i].y) * 255) <<
+    //            (unsigned char)(std::min(float(1), image[i].z) * 255);
+    // }
+    // ofs.close();
     delete [] image;
 }
 
 /*-------------------------------------------------------------------------------------------------
-Generating jpg file using FreeImage
-parameters: framebuffer, width, height, samples per pixel
+save_image: Generats jpg file using FreeImage
+parameters: (framebuffer, width, height, samples per pixel)
 --------------------------------------------------------------------------------------------------*/
+float clamp(const float& lo, const float& hi, const float& v) return std::max(lo, std::min(hi, v);
 
-void save_image(std::shared_ptr<vec3[]> framebuffer, int width, int height, int samples_per_pixel) 
+void save_image(std::shared_ptr<Vec3f[]> framebuffer, int width, int height, int samples_per_pixel) 
 {
 	std::vector<unsigned char> pixels;
-	std::ofstream ofs;
-	ofs.open("out.ppm");
-	ofs << "P6\n" << width << " " << height << "\n255\n";
+    // Save result to a PPM image (keep these flags if you compile under Windows)
+    std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
+    ofs << "P6\n" << width << " " << height << "\n255\n";    
+	// std::ofstream ofs;
+	// ofs.open("out.ppm");
+	// ofs << "P6\n" << width << " " << height << "\n255\n";
 	int currentpix = 0;
 	for (int j = 0; j < height; ++j) {
 		for (int i = 0; i < width; i++)

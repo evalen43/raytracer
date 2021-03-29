@@ -4,6 +4,7 @@
         "*.f90": "fortran-modern",
         "*.f": "fortran-fixed",
         "*.f95": "fortran-95",
-        "utility": "cpp"
+        "utility": "cpp",
+        "vector": "cpp"
     }
 }
