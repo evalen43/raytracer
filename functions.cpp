@@ -28,7 +28,7 @@ Vec3f trace(
     const std::vector<Sphere> &spheres,
     const int &depth)
 {
-    //if (raydir.length() != 1) std::cerr << "Error " << raydir << std::endl;
+    //if (raydir.length() != 1) std::cerr << "Error raydir not one:" << raydir << std::endl;
     float tnear = INFINITY;
     const Sphere* sphere = NULL;
     // find intersection of this ray with the sphere in the scene
@@ -79,7 +79,7 @@ Vec3f trace(
             Vec3f refrdir = raydir * eta + nhit * (eta *  cosi - sqrt(k));
             refrdir.normalize();
             refraction = trace(phit - nhit * bias, refrdir, spheres, depth + 1);//----------------------------Recursive
-            std::cout<<refraction<<std::endl;
+            //std::cout<<refraction<<std::endl;
         }
         // the result is a mix of reflection and refraction (if the sphere is transparent)
         surfaceColor = (
@@ -123,7 +123,8 @@ float clamp(const float& lo, const float& hi, const float& v)
     return std::max(lo, std::min(hi, v));
 }
 
-void save_image(std::shared_ptr<Vec3f[]> framebuffer, int width, int height, int samples_per_pixel) 
+//void save_image(std::shared_ptr<Vec3f[]> framebuffer, int width, int height, int samples_per_pixel)
+void save_image(Vec3f* framebuffer, int width, int height, int samples_per_pixel)  
 {
 	std::vector<unsigned char> pixels;
     // Save result to a PPM image (keep these flags if you compile under Windows)
@@ -154,15 +155,15 @@ void save_image(std::shared_ptr<Vec3f[]> framebuffer, int width, int height, int
 	}
 	ofs.close();
 	//writeImage(width, height, pixels);
-	FreeImage_Initialise();
-	FIBITMAP* img = FreeImage_ConvertFromRawBits(pixels.data(), width, height, width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
-	FreeImage_FlipVertical(img);
-	char fname[] = "output.png";
-	FreeImage_Save(FIF_PNG, img, fname, 0);
+	// FreeImage_Initialise();
+	// FIBITMAP* img = FreeImage_ConvertFromRawBits(pixels.data(), width, height, width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
+	// FreeImage_FlipVertical(img);
+	// char fname[] = "output.png";
+	// FreeImage_Save(FIF_PNG, img, fname, 0);
 
-	FreeImage_DeInitialise();
-	printf("outputting image...\n");
-	std::cout << fname << std::endl;
+	// FreeImage_DeInitialise();
+	// printf("outputting image...\n");
+	// std::cout << fname << std::endl;
 	std::cout << "Press any key to exit" << std::endl;
 	std::cin.get();
 	std::cerr << "\nDone.\n";
@@ -178,22 +179,22 @@ Parameter(s): vector with list of objects (spheres)
 void render(const std::vector<Sphere> &spheres)
 {
     unsigned width = 640, height = 480;
-    std::shared_ptr<Vec3f[]> image(new Vec3f(width*height));
+    //std::shared_ptr<Vec3f[]> image(new Vec3f(width*height));
     //Vec3f *pixel=image;
-    //Vec3f *image = new Vec3f[width * height], *pixel = image;
+    Vec3f *image = new Vec3f[width * height], *pixel = image;
     float invWidth = 1 / float(width), invHeight = 1 / float(height);
     float fov = 30, aspectratio = width / float(height);
     float angle = tan(M_PI * 0.5 * fov / 180.);
     // Trace rays
     int npix=0;
     for (unsigned y = 0; y < height; ++y) {
-        for (unsigned x = 0; x < width; ++x){//, ++pixel) {
+        for (unsigned x = 0; x < width; ++x, ++pixel) {
             float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio;
             float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle;
             Vec3f raydir(xx, yy, -1);
             raydir.normalize();
-            //*pixel = trace(Vec3f(0), raydir, spheres, 0);
-            image[npix] = trace(Vec3f(0), raydir, spheres, 0);
+            *pixel = trace(Vec3f(0), raydir, spheres, 0);
+            //image[npix] = trace(Vec3f(0), raydir, spheres, 0);
             npix++;
         }
     }
@@ -206,8 +207,8 @@ void render(const std::vector<Sphere> &spheres)
     //            (unsigned char)(std::min(float(1), image[i].y) * 255) <<
     //            (unsigned char)(std::min(float(1), image[i].z) * 255);
     // }
-    // ofs.close();
-    //delete [] image;
+    //ofs.close();
+    delete [] image;
 }
 
 
